@@ -1,48 +1,60 @@
 """
-Database Schemas
+Database Schemas for AI Personal Finance Autopilot
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model represents a collection in MongoDB. The collection name is the lowercase class name.
 """
-
+from typing import Optional, Literal
 from pydantic import BaseModel, Field
-from typing import Optional
-
-# Example schemas (replace with your own):
+from datetime import date, datetime
 
 class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    email: str
+    name: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+class Subscription(BaseModel):
+    user_id: str
+    merchant_name: str
+    plan_name: Optional[str] = None
+    amount: float
+    currency: str = Field(..., description="ISO currency, e.g., USD, EUR")
+    billing_frequency: Literal['weekly','monthly','quarterly','yearly','one_time']
+    next_billing_date: Optional[date] = None
+    category: Optional[str] = None
+    status: Literal['active','paused','canceled'] = 'active'
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
-# Add your own schemas here:
-# --------------------------------------------------
+class Transaction(BaseModel):
+    user_id: str
+    merchant_name: Optional[str] = None
+    amount: float
+    currency: str
+    billing_frequency: Optional[str] = None
+    first_charge_date: Optional[date] = None
+    next_billing_date: Optional[date] = None
+    is_recurring: Optional[bool] = None
+    category: Optional[str] = None
+    raw_text: Optional[str] = None
+    source: Literal['manual','text','screenshot','pdf','csv'] = 'manual'
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class UploadedFile(BaseModel):
+    user_id: str
+    file_type: Literal['screenshot','pdf','csv']
+    original_filename: str
+    storage_path: str
+    status: Literal['uploaded','processing','processed','failed'] = 'uploaded'
+    created_at: Optional[datetime] = None
+
+class Action(BaseModel):
+    user_id: str
+    subscription_id: str
+    type: Literal['cancel','negotiate']
+    status: Literal['draft','queued','sent','failed'] = 'draft'
+    email_subject: Optional[str] = None
+    email_body: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
